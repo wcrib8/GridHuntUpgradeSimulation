@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 folder = Path("SaveData")
-stats_keys = ['reload', 'resistance', 'speed', 'vision']
+stats_keys = ['reload', 'resistance', 'speed', 'vision', 'food']
 
 # collect data
 # go through each file in folder, then print stats for each round for that player
@@ -21,6 +21,7 @@ for file in folder.glob('*.jsonl'):
             entry = json.loads(line)
             round_num = entry['round']
             players[name][round_num] = entry['upgrade_stats']
+            players[name][round_num]['food'] = entry['game_state']['player_info']['food']
 
             #if the round changes, print the stats for that round (console print version)
             # if entry['round'] != curr_round:
