@@ -11,25 +11,29 @@ stats_keys = ['reload', 'resistance', 'speed', 'vision', 'food']
 players = {}
 for file in folder.glob('*.jsonl'):
     if file.stem == 'game_params':
-        continue
+        with open(file, 'r') as f:
+            game_map = json.load(f)['map_name']
+            continue
     name = file.stem
     players[name] = {}
-    #print(name, ":\n")
-    #curr_round = 0
+
     with open(file, 'r') as f:
+        # iterate through each json line in file to find stat changes
         for line in f:
             entry = json.loads(line)
-            round_num = entry['round']
-            players[name][round_num] = entry['upgrade_stats']
-            players[name][round_num]['food'] = entry['game_state']['player_info']['food']
+            round_num = entry['round']     # get stats for each round
+            stats = {**entry['upgrade_stats'], 'food': entry['game_state']['player_info']['food']}  # combine upgrade stats and food into one dict
+            if round_num not in players[name]:
+                # if the round is not in the player's stats, add it with the current stats as both min and max
+                players[name][round_num] = {
+                    stat: {'min': stats[stat], 'max': stats[stat]} for stat in stats_keys
+                }
+            else:
+                # track max and min to see the difference in stats, also show degraded stats
+                for stat in stats_keys:
+                    players[name][round_num][stat]['min'] = min(players[name][round_num][stat]['min'], stats[stat])
+                    players[name][round_num][stat]['max'] = max(players[name][round_num][stat]['max'], stats[stat])
 
-            #if the round changes, print the stats for that round (console print version)
-            # if entry['round'] != curr_round:
-            #     curr_round += 1
-            #     print("Round ", curr_round, ":")
-            #     for stat in entry['upgrade_stats']:
-            #         print(stat, ":", entry['upgrade_stats'][stat], " ")
-            #     print()
 
 #plot
 player_names = list(players.keys())
@@ -39,13 +43,15 @@ x = np.arange(len(all_rounds))
 width = 0.8 / len(stats_keys)
 
 fig, axes = plt.subplots(1, len(player_names), figsize=(12, 5), sharey=True)
-fig.suptitle('Player Upgrade Stats by Round')
+fig.suptitle(f'Player Upgrade Stats by Round\nGame Map: {game_map}')
 
 for ax, name in zip(axes, player_names):
     for i, stat in enumerate(stats_keys):
-        values = [players[name].get(r, {}).get(stat, 0) for r in all_rounds]
+        min_values = [players[name].get(r, {}).get(stat, {}).get('min', 0) for r in all_rounds]
+        max_values = [players[name].get(r, {}).get(stat, {}).get('max', 0) for r in all_rounds]
         offset = (i - len(stats_keys) / 2) * width + width / 2
-        ax.bar(x + offset, values, width=width, label=stat)
+        ax.bar(x + offset, max_values, width=width, label=f'{stat}')
+        ax.bar(x + offset, min_values, width=width, hatch='///', color='white', alpha=0.25)
     ax.set_title(name)
     ax.set_xlabel('Round')
     ax.set_ylabel('Value')
@@ -55,5 +61,3 @@ for ax, name in zip(axes, player_names):
 
 plt.tight_layout()
 plt.show()
-
-#display_stats()
