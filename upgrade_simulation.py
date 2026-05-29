@@ -66,5 +66,5 @@ for ax, name in zip(axes, player_names):
     ax.set_xticklabels([f'{r}' for r in all_rounds])
     ax.legend()
 
-plt.tight_layout()
+plt.tight_layout(rect=[0, 0, 1, 0.95])
 plt.show()
