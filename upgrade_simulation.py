@@ -64,7 +64,15 @@ for ax, name in zip(axes, player_names):
     ax.set_ylabel('Value')
     ax.set_xticks(x)
     ax.set_xticklabels([f'{r}' for r in all_rounds])
+    ax.set_yscale('symlog', linthresh=10)
+    ticks = list(range(0,11)) + list(range(20, 101, 10))
+    ax.set_yticks(ticks)
+    ax.set_yticklabels([str(t) for t in ticks])
+    ax.grid(axis='y', linestyle='--', alpha=0.5)
     ax.legend()
+
+for ax in axes[:n_players]:
+    ax.tick_params(axis='y', labelleft=True)
 
 plt.tight_layout(rect=[0, 0, 1, 0.95])
 plt.show()
